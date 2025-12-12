@@ -340,6 +340,15 @@ services:
         - EUREKA_INSTANCE_HOSTNAME=terra-product-service
         - EUREKA_CLIENT_FETCH-REGISTRY=true
         - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+        - ALLOWED_HOSTS=localhost,127.0.0.1,terra-product-service,0.0.0.0,*
+        - CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://localhost:8082
+        - MYSQL_HOST=terabia_product  # Nom du service MySQL dans docker-compose
+        - MYSQL_PORT=3306
+        - MYSQL_DATABASE=terabia_product_db
+        - MYSQL_USER=terabia_user
+        - MYSQL_PASSWORD=terabia_password
+        - MYSQL_ROOT_PASSWORD=root
+      
       networks:
         - terra-network
 

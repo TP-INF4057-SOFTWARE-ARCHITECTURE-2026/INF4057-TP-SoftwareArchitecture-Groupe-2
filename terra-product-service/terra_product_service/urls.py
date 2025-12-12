@@ -1,17 +1,17 @@
+# terra_product_service/urls.py (racine)
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
-# Documentation Swagger / Redoc
 schema_view = get_schema_view(
     openapi.Info(
         title="Terra Product Service API",
         default_version='v1',
-        description="API pour la gestion des produits, catégories et médias",
-        contact=openapi.Contact(email="support@terra.com"),
-        license=openapi.License(name="MIT License"),
+        description="API pour la gestion des produits agricoles",
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
@@ -19,14 +19,15 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('product_app.urls')),  # Toutes les routes CRUD + recherche
-
-    # Swagger JSON / YAML
-    path('swagger(<format>\.json|\.yaml)', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-
-    # Swagger UI
+    path('api/', include('product_app.urls')),
+    
+    # Documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-
-    # Redoc
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    
+    # Health checks
+    path('api/health/', include('product_app.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

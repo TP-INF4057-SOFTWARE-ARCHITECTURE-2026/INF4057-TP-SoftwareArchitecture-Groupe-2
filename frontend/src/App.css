@@ -95,7 +95,7 @@ button.shine-hover::before {
 /* Correction pour les boutons avec gradient */
 button.bg-gradient-to-r span,
 button.bg-gradient-to-r div {
-  color: white !important;
+  color: rgb(80, 231, 105) !important;
   position: relative;
   z-index: 10;
 }
