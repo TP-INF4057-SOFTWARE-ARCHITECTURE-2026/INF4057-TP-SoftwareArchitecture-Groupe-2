@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: terra-product-mysql-pvc
+  namespace: terrabia
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terabia-product-db
+  namespace: terrabia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terabia-product-db
+  template:
+    metadata:
+      labels:
+        app: terabia-product-db
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: mysql-root-password
+        - name: MYSQL_DATABASE
+          value: "terabia_product_db"
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: mysql-user
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: mysql-password
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: mysql-data
+        persistentVolumeClaim:
+          claimName: terra-product-mysql-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: terabia-product-db
+  namespace: terrabia
+spec:
+  selector:
+    app: terabia-product-db
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP

@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: terrabia
+
+resources:
+  # Namespace
+  - namespaces/terrabia-namespace.yaml
+  
+  # Configurations
+  - configs/configmaps/global-config.yaml
+  - configs/secrets/database-secrets.yaml
+  
+  # Bases de données
+  - databases/mysql-auth.yaml
+  - databases/postgres-users.yaml
+  - databases/mysql-product.yaml
+  - databases/postgres-orders.yaml
+  - databases/mysql-notification.yaml
+  - databases/rabbitmq.yaml
+  
+  # Services Spring Boot / Django
+  - services/terra-conf-service.yaml
+  - services/terra-registry-service.yaml
+  - services/terra-proxy-service.yaml
+  - services/terra-auth-service.yaml
+  - services/terra-users-service.yaml
+  - services/terra-product-service.yaml
+  - services/terra-order-transaction-service.yaml
+  - services/terra-notification-service.yaml
+  - services/frontend.yaml
+  
+  # Ingress
+  - ingress/terrabia-ingress.yaml
+
+images:
+  - name: nguembu/terrabia-web-terra-conf-service
+    newTag: latest
+  - name: nguembu/terrabia-web-terra-registry-service
+    newTag: latest
+  - name: nguembu/terrabia-web-terra-proxy-service
+    newTag: latest
+  - name: nguembu/terrabia-web-terra-auth-service
+    newTag: latest
+  - name: nguembu/terrabia-web-terra-users-service
+    newTag: latest
+  - name: nguembu/terrabia-web-terra-product-service
+    newTag: latest
+  - name: nguembu/terrabia-web-terra-order-transaction-service
+    newTag: latest
+  - name: nguembu/terrabia-web-terra-notification-service
+    newTag: latest
+  - name: nguembu/terrabia-web-frontend
+    newTag: latest
+

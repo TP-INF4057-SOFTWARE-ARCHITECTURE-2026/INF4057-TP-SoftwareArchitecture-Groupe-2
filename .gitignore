@@ -1,0 +1,12 @@
+node_modules
+.env
+dist
+# Fichiers binaires volumineux
+awscliv2.zip
+minikube-linux-amd64
+
+# Fichiers spécifiques
+awscliv2.zip
+minikube-*
+kubectl
+helm

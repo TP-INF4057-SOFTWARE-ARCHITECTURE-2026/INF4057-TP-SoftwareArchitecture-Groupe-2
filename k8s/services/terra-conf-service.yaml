@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terra-conf-service
+  namespace: terrabia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terra-conf-service
+  template:
+    metadata:
+      labels:
+        app: terra-conf-service
+    spec:
+      containers:
+      - name: terra-conf-service
+        image: nguembu/terrabia-web-terra-conf-service:latest
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: "terra-conf-service"
+        - name: SERVER_PORT
+          value: "8080"
+        - name: SPRING_CLOUD_CONFIG_SERVER_GIT_URI
+          value: "https://github.com/TP-Master1-GL/cloud-conf"
+        - name: SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL
+          value: "main"
+        - name: SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS
+          value: "terra-cloud-conf"
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: terra-conf-service
+  namespace: terrabia
+spec:
+  selector:
+    app: terra-conf-service
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP

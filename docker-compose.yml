@@ -1,0 +1,479 @@
+version: '3.8'
+services:
+  terra-conf-service:
+    build:
+      context: ./terra-conf-service
+    container_name: terra-conf-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_APPLICATION_NAME=terra-conf-service
+      - SERVER_PORT=8080
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/TP-Master1-GL/cloud-conf
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL=main
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS=terra-cloud-conf
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_SKIP_SSL_VALIDATION=true
+      - GIT_SSL_NO_VERIFY=true
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE_PULL=false
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_REFRESH_RATE=5
+    networks:
+      - terra-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || curl -f http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  terra-registry-service:
+    build:
+      context: ./terra-registry-service
+    container_name: terra-registry-service
+    depends_on:
+      - terra-conf-service
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_APPLICATION_NAME=terra-registry-service
+      - SPRING_CLOUD_CONFIG_URI=http://terra-conf-service:8080/
+      - SPRING_CONFIG_IMPORT=configserver:http://terra-conf-service:8080/
+    networks:
+      - terra-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://terra-registry-service:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    
+  terra-proxy-service:  
+    build:
+      context: ./terra-proxy-service
+    container_name: terra-proxy-service
+    depends_on:
+        - terra-conf-service
+        - terra-registry-service
+    ports:
+        - "8082:8082"
+    environment:
+        - SPRING_APPLICATION_NAME=terra-proxy-service 
+        - SPRING_CLOUD_CONFIG_URI=http://terra-conf-service:8080/  
+        - SPRING_CONFIG_IMPORT=configserver:http://terra-conf-service:8080/
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://terra-registry-service:8761/eureka/
+        - SPRING_CLOUD_CONFIG_ENABLED=true
+        - EUREKA_CLIENT_ENABLED=true
+        - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+        - EUREKA_INSTANCE_HOSTNAME=terra-proxy-service
+        - EUREKA_CLIENT_FETCH_REGISTRY=true
+        - EUREKA_CLIENT_REGISTER_WITH_EUREKA=true
+        - EUREKA_INSTANCE_APPNAME=TERRA-PROXY-SERVICE
+        - EUREKA_CLIENT_INITIAL-INSTANCE-INFO-REPLICATION-INTERVAL-SECONDS=5
+        - EUREKA_INSTANCE_LEASE-RENEWAL-INTERVAL-IN-SECONDS=5
+        - EUREKA_INSTANCE_LEASE-EXPIRATION-DURATION-IN-SECONDS=10
+        - EUREKA_INSTANCE_INSTANCE-ID=terra-proxy-service:8082
+        - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173
+        - CORS_ALLOWED_METHODS=GET,POST,PUT,PATCH,DELETE,OPTIONS
+
+    networks:
+      - terra-network
+
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://terra-proxy-service:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+# Postgres database for orders and transactions service
+  terra-orders-db:
+    image: postgres:15-alpine
+    container_name: terra-orders-db
+    environment:
+      - POSTGRES_USER=terra_user
+      - POSTGRES_PASSWORD=terra_password
+      - POSTGRES_DB=terra_orders_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - terra-postgres-data:/var/lib/postgresql/data
+    networks:
+      - terra-network
+
+#service for orders and transactions management in django
+  terra-order-transaction-service:
+    build:
+      context: ./terra-order-transaction-service
+      dockerfile: Dockerfile
+      
+    container_name: terra-order-transaction-service
+    depends_on:
+      - terra-conf-service
+      - terra-registry-service
+      - terra-orders-db
+    ports:
+      - "8086:8086"
+    environment:
+      - DJANGO_SETTINGS_MODULE=terra_orders.settings
+      - DEBUG=TRUE
+      - SPRING_CLOUD_CONFIG_URI=http://terra-conf-service:8080/
+      - SPRING_CONFIG_IMPORT=configserver:http://terra-conf-service:8080/
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://terra-registry-service:8761/eureka/
+      - EUREKA_SERVER=http://terra-registry-service:8761/eureka/
+      - EUREKA_CLIENT_ENABLED=true
+      - EUREKA_INSTANCE_PORT=8086
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - EUREKA_INSTANCE_HOSTNAME=terra-order-transaction-service
+      - EUREKA_CLIENT_FETCH-REGISTRY=true
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      - SECRET_KEY=terra-order-secret-key-2024-change-in-production
+      - DATABASE_URL=postgres://terra_user:terra_password@terra-orders-db:5432/terra_orders_db
+      - EUREKA_SERVER-URL_DEFAULT_ZONE=http://terra-registry-service:8761/eureka/
+      - SERVICE_NAME=terra-order-transaction-service
+      - SERVICE_PORT=8086
+      - EUREKA_ENABLED=true
+      - RABBITMQ_HOST=terra-rabbitmq  # Nom du service Docker Compose
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    # volumes:
+    #   - ./terra-order-transaction-service:/app  
+    #   - static_volume:/app/staticfiles
+    #   - media_volume:/app/mediafiles
+    #   - logs_volume:/app/logs
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://terra-order-transaction-service:8086/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - terra-network
+    # dns:  # Ajouté pour résoudre les problèmes DNS potentiels
+    # - 8.8.8.8
+    # - 1.1.1.1
+
+  # terra-redis:
+  #   image: redis:7-alpine
+  #   container_name: terra-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - terra-redis-data:/data
+  #   networks:
+  #     - terra-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: unless-stopped
+
+
+#base de donnes du service d'authentification(mysql)
+  terra-auth-db:
+    image: mysql:8.0
+    container_name: terra-auth-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=terabia
+      - MYSQL_USER=terabia_user
+      - MYSQL_PASSWORD=terabia_pass
+    ports:
+      - "3308:3306"
+    volumes:
+      - terra-auth-data:/var/lib/mysql
+    networks:
+      - terra-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+
+
+#service for user authentication en django
+  terra-auth-service:
+    build:
+      context: ./terra-auth-service
+      dockerfile: Dockerfile
+    container_name: terra-auth-service
+    depends_on:
+      - terra-conf-service
+      - terra-registry-service
+      - terra-auth-db
+    ports:
+      - "8083:8083"
+    environment:
+      - DJANGO-SETTINGS-MODULE=terra_auth_service.settings
+      - DEBUG=TRUE
+      - SPRING_CLOUD_CONFIG_URI=http://terra-conf-service:8080/
+      - SPRING_CONFIG_IMPORT=configserver:http://terra-conf-service:8080/
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://terra-registry-service:8761/eureka/
+      - EUREKA_CLIENT_ENABLED=true
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - EUREKA_INSTANCE_HOSTNAME=terra-auth-service
+      - EUREKA_INSTANCE_NON_SECURE_PORT=8083
+      - EXTERNAL_HOSTNAME=localhost  # Pour l'accès depuis l'hôte
+      - EUREKA_INSTANCE_HOME_PAGE_URL=http://terra-auth-service:8083/
+      - EUREKA_CLIENT_FETCH-REGISTRY=true
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      - SECRET_KEY=terra-auth-secret-key-2024-change-in-production
+      - REDIS_URL=redis://terra-redis:6379/0
+      - ALLOWED_HOSTS=localhost
+      - RABBITMQ_HOST=terra-rabbitmq  # Nom du service Docker Compose
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - DB_HOST=terra-auth-db  # Nom du container MySQL
+      - DB_NAME=terabia
+      - DB_USER=terabia_user
+      - DB_PASSWORD=terabia_pass  # Correspond à docker-compose
+      - DB_PORT=3306
+      - MYSQL_SSL_MODE=DISABLED
+    networks:
+      - terra-network
+
+
+#base de donnes du service des utilisateurs (postgresql)
+  terra-users-db:
+    image: postgres:15-alpine
+    container_name: terra-users-db
+    environment:
+      - POSTGRES_USER=delphan
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=terra_users_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - terra-users-data:/var/lib/postgresql/data
+    networks:
+      - terra-network
+    healthcheck:
+      test: ["CMD", "pg_isready -U delphan"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+
+  terra-users-service:
+    build:
+      context: ./terra-users-service/user_service
+      dockerfile: Dockerfile
+    container_name: terra-users-service
+    depends_on:
+      - terra-conf-service
+      - terra-registry-service
+      - terra-users-db
+    ports:
+      - "8084:8084"
+    environment:
+      - DJANGO-SETTINGS-MODULE=user_service.settings
+      - DEBUG=TRUE
+      - SPRING_APLLICATION_NAME= terra-proxy-service
+      - SPRING_CLOUD_CONFIG_URI=http://terra-conf-service:8080/
+      - SPRING_CONFIG_IMPORT=configserver:http://terra-conf-service:8080/
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://terra-registry-service:8761/eureka/
+      - EUREKA_CLIENT_ENABLED=true
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - EUREKA_INSTANCE_HOSTNAME=terra-users-service
+      - EUREKA_CLIENT_FETCH-REGISTRY=true
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      - RABBITMQ_HOST=terra-rabbitmq  # Nom du service Docker Compose
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    networks:
+      - terra-network
+
+# base de donnes du service de produits(mysql)
+  terabia_product:
+    image: mysql:8.0
+    container_name: terabia_product
+    environment:
+      - MYSQL_ROOT_PASSWORD= root
+      - MYSQL_DATABASE=terabia_product_db
+      - MYSQL_USER=terabia_user
+      - MYSQL_PASSWORD=terabia_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - terabia_product-data:/var/lib/mysql
+    networks:
+      - terra-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped 
+
+ 
+
+  terra-product-service:
+      build:
+        context: ./terra-product-service
+        dockerfile: Dockerfile
+      container_name: terra-product-service
+      depends_on:
+        - terra-conf-service
+        - terra-registry-service
+        - terabia_product
+      ports:
+        - "8085:8085"
+      environment:
+        - DJANGO-SETTINGS-MODULE=terra_product_service.settings
+        - DEBUG=TRUE
+        - SPRING_CLOUD_CONFIG_URI=http://terra-conf-service:8080/
+        - SPRING_CONFIG_IMPORT=configserver:http://terra-conf-service:8080/
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://terra-registry-service:8761/eureka/
+        - EUREKA_CLIENT_ENABLED=true
+        - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+        - EUREKA_INSTANCE_HOSTNAME=terra-product-service
+        - EUREKA_CLIENT_FETCH-REGISTRY=true
+        - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      networks:
+        - terra-network
+
+#base de donnes  dudu service de notification(mysql)
+  terra-notification-db:
+    image: mysql:8.0
+    container_name: terra-notification-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: terra_notification_db
+      MYSQL_USER: terra_notification_user
+      MYSQL_PASSWORD: terra_notification_pass
+    ports:
+      - "3309:3306"
+    volumes:
+      - terra-notification-data:/var/lib/mysql
+    networks:
+      - terra-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+
+
+#service de notification(node.js)
+  terra-notification-service:
+    build:
+      context: ./terra-notification-service
+      dockerfile: Dockerfile
+    container_name: terra-notification-service
+    depends_on:
+      terra-conf-service:
+        condition: service_healthy
+      terra-registry-service:
+        condition: service_healthy
+      terra-notification-db:
+        condition: service_healthy
+      terra-rabbitmq:
+        condition: service_healthy
+    ports:
+      - "4002:4002"
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+      - HOSTNAME=terra-notification-service
+      - SERVICE_NAME=terra-notification-service
+      - CONFIG_SERVICE_URL=http://terra-conf-service:8080
+      - EUREKA_HOST=terra-registry-service
+      - EUREKA_PORT=8761
+      - DB_HOST=terra-notification-db
+      - DB_USER=terra_notification_user
+      - DB_PASSWORD=terra_notification_pass
+      - DB_NAME=terra_notification_db
+      - RABBITMQ_HOST=terra-rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_URL=amqp://terra-rabbitmq:5672
+      - RABBITMQ_EXCHANGE=user.events
+      - RABBITMQ_QUEUE=queue.user.created
+    networks:
+      - terra-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"  
+
+#RabbitMq service
+  terra-rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - terra-rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - terra-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+  
+  frontend:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+        args:
+          - VITE_API_GATEWAY_URL=http://terra-proxy-service:8082
+          - VITE_APP_NAME=TERRABIA
+          - VITE_BASE_URL=/
+      ports:
+        - "5173:80"  # Changé de 5173:5173 à 5173:80
+      environment:
+        - NODE_ENV=production
+        - VITE_API_GATEWAY_URL=http://terra-proxy-service:8082
+      volumes:
+        - ./frontend/public:/usr/share/nginx/html/public:ro
+      networks:
+        - terra-network
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 40s
+      restart: unless-stopped
+
+
+networks:
+  terra-network:
+    driver: bridge
+
+volumes:
+  terra-postgres-data:
+  terra-redis-data:
+  terra-auth-data:
+  terra-users-data:
+  terabia_product-data:
+  terra-notification-data:
+  terra-rabbitmq-data:

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: terrabia
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: nguembu/terrabia-web-frontend:latest
+        env:
+        - name: VITE_API_GATEWAY_URL
+          value: "http://terra-proxy-service:8082"
+        - name: VITE_APP_NAME
+          value: "TERRABIA"
+        - name: NODE_ENV
+          value: "production"
+        - name: VITE_AUTH_SERVICE_URL
+          value: "http://terra-auth-service:8083"
+        - name: VITE_USERS_SERVICE_URL
+          value: "http://terra-users-service:8084"
+        - name: VITE_PRODUCTS_SERVICE_URL
+          value: "http://terra-product-service:8085"
+        - name: VITE_ORDERS_SERVICE_URL
+          value: "http://terra-order-transaction-service:8086"
+        - name: VITE_NOTIFICATIONS_SERVICE_URL
+          value: "http://terra-notification-service:4002"
+        - name: VITE_API_TIMEOUT
+          value: "30000"
+        ports:
+        - containerPort: 5173
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5173
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5173
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: terrabia
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 5173
+  type: LoadBalancer

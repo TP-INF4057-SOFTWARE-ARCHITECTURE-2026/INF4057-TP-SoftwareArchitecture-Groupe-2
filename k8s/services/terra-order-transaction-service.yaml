@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terra-order-transaction-service
+  namespace: terrabia
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: terra-order-transaction-service
+  template:
+    metadata:
+      labels:
+        app: terra-order-transaction-service
+    spec:
+      containers:
+      - name: terra-order-transaction-service
+        image: nguembu/terrabia-web-terra-order-transaction-service:latest
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: "terra_orders.settings"
+        - name: DEBUG
+          value: "TRUE"
+        - name: SPRING_CLOUD_CONFIG_URI
+          valueFrom:
+            configMapKeyRef:
+              name: terrabia-global-config
+              key: SPRING_CLOUD_CONFIG_URI
+        - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+          valueFrom:
+            configMapKeyRef:
+              name: terrabia-global-config
+              key: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+        - name: EUREKA_CLIENT_ENABLED
+          value: "true"
+        - name: EUREKA_CLIENT_FETCH_REGISTRY
+          value: "true"
+        - name: EUREKA_CLIENT_REGISTER_WITH_EUREKA
+          value: "true"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: django-secret-key
+        - name: DATABASE_URL
+          value: "postgresql://terra_user:terra_password@terra-orders-db:5432/terra_orders_db"
+        - name: SERVICE_PORT
+          value: "8086"
+        ports:
+        - containerPort: 8086
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8086
+          initialDelaySeconds: 120
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8086
+          initialDelaySeconds: 90
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: terra-order-transaction-service
+  namespace: terrabia
+spec:
+  selector:
+    app: terra-order-transaction-service
+  ports:
+  - port: 8086
+    targetPort: 8086
+  type: ClusterIP

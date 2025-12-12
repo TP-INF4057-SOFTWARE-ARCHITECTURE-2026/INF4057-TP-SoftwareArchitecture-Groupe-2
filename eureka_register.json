@@ -1,0 +1,14 @@
+{
+  "instance": {
+    "instanceId": "terra-auth-service:8083",
+    "hostName": "terra-auth-service",
+    "app": "TERRA-AUTH-SERVICE",
+    "ipAddr": "terra-auth-service",
+    "port": {"$": 8083, "@enabled": "true"},
+    "status": "UP",
+    "dataCenterInfo": {
+      "@class": "com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo",
+      "name": "MyOwn"
+    }
+  }
+}

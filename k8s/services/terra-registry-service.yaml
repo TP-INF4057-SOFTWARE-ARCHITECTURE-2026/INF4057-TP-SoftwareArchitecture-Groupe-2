@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terra-registry-service
+  namespace: terrabia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terra-registry-service
+  template:
+    metadata:
+      labels:
+        app: terra-registry-service
+    spec:
+      containers:
+      - name: terra-registry-service
+        image: nguembu/terrabia-web-terra-registry-service:latest
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: "terra-registry-service"
+        - name: SPRING_CLOUD_CONFIG_URI
+          valueFrom:
+            configMapKeyRef:
+              name: terrabia-global-config
+              key: SPRING_CLOUD_CONFIG_URI
+        ports:
+        - containerPort: 8761
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8761
+          initialDelaySeconds: 90
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8761
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: terra-registry-service
+  namespace: terrabia
+spec:
+  selector:
+    app: terra-registry-service
+  ports:
+  - port: 8761
+    targetPort: 8761
+  type: ClusterIP
