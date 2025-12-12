@@ -115,7 +115,7 @@ text
 ## 🚀 Démarrage Rapide
 
 ### Prérequis
-```bash
+
 # Outils obligatoires
 - Docker 20.10+ et Docker Compose
 - Python 3.9+ (pour les services Django)
@@ -444,9 +444,5 @@ Phase 3 - Q2 2026
 
 📅 Certification produits
 
-<div align="center">
-TERRABIA - Transformer l'agriculture camerounaise par le numérique 🌱
 
-https://img.shields.io/github/stars/TP-Master1-GL/TERRABIA?style=social
-https://img.shields.io/github/forks/TP-Master1-GL/TERRABIA?style=social
-https://img.shields.io/github/issues/TP-Master1-GL/TERRABIA
+TERRABIA - Transformer l'agriculture camerounaise par le numérique 🌱
