@@ -1,387 +1,452 @@
-🚀  TERRABIA - Plateforme E-commerce de Produits Terroir 
+# 🚀 TERRABIA - Marketplace Agricole Camerounaise
 
-Une plateforme e-commerce moderne et modulaire spécialisée dans la vente de produits du terroir, construite avec une architecture de microservices.
+![Architecture Microservices](https://img.shields.io/badge/architecture-microservices-blue)
+![Python](https://img.shields.io/badge/python-97.6%25-yellow)
+![Docker](https://img.shields.io/badge/docker-ready-green)
+![Kubernetes](https://img.shields.io/badge/kubernetes-deployment-orange)
 
-📋 Table des Matières
-Présentation
+**Une plateforme numérique révolutionnaire qui connecte directement les agriculteurs camerounais aux acheteurs, optimisant la chaîne de valeur agricole locale.**
 
-Architecture
+## 📋 Table des Matières
+- [🎯 Aperçu du Projet](#-aperçu-du-projet)
+- [🏗️ Architecture Technique](#️-architecture-technique)
+- [✨ Fonctionnalités Clés](#-fonctionnalités-clés)
+- [👥 Rôles Utilisateurs](#-rôles-utilisateurs)
+- [🚀 Démarrage Rapide](#-démarrage-rapide)
+- [🐳 Déploiement avec Docker](#-déploiement-avec-docker)
+- [⚙️ Configuration des Services](#️-configuration-des-services)
+- [🔧 Guide de Développement](#-guide-de-développement)
+- [📊 API Documentation](#-api-documentation)
+- [🧪 Tests et Qualité](#-tests-et-qualité)
+- [🤝 Contribution](#-contribution)
+- [📄 Licence](#-licence)
 
-Fonctionnalités
+## 🎯 Aperçu du Projet
 
-Prérequis
+**TERRABIA** est une solution e-commerce complète spécialisée dans les produits du terroir camerounais. La plateforme vise à :
+- 🔗 **Connecter directement** agriculteurs et acheteurs
+- 📈 **Optimiser la chaîne logistique** agricole
+- 💰 **Augmenter les revenus** des producteurs locaux
+- 🛡️ **Instaurer un système de confiance** via notation et feedback
+- 🌱 **Promouvoir l'agriculture locale** et durable
 
-Installation et Démarrage
+**Objectif principal** : Créer un écosystème numérique complet facilitant la commercialisation des produits agricoles camerounais.
 
-Déploiement
+## 🏗️ Architecture Technique
 
-Structure du Projet
-
-Contributions
-
-Licence
-
-🎯 Présentation du Projet
-TERRABIA est une solution e-commerce complète permettant la gestion et la vente en ligne de produits du terroir. L'application repose sur une architecture de microservices pour assurer scalabilité, maintenabilité et résilience.
-
-Technologies principales : Python, React, Docker, Kubernetes, Spring Cloud (Eureka)
-
-🏗️ Architecture
-Le projet suit une architecture de microservices avec les composants suivants :
+### Architecture Microservices
+┌─────────────────────────────────────────────────────────────┐
+│ Frontend (React + Vite) │
+│ http://localhost:5173 │
+└───────────────────────────┬─────────────────────────────────┘
+│
+┌───────────────────────────▼─────────────────────────────────┐
+│ API Gateway (Spring Boot) │
+│ terra-proxy-service:8080 │
+└─────┬────────────┬────────────┬────────────┬───────────────┘
+│ │ │ │
+▼ ▼ ▼ ▼
+┌──────────┐┌──────────┐┌──────────┐┌──────────┐┌──────────┐
+│ Auth ││ Users ││ Products ││ Orders ││ Notif │
+│ Service ││ Service ││ Service ││ Service ││ Service │
+│ 8082 ││ 8001 ││ 8002 ││ 8003 ││ 8004 │
+└──────────┘└──────────┘└──────────┘└──────────┘└──────────┘
+│ │ │ │ │
+└────────────┴────────────┴────────────┴────────────┘
+│
+┌───────────────────────────▼─────────────────────────────────┐
+│ Service Registry (Eureka) │
+│ terra-registry-service:8761 │
+└─────────────────────────────────────────────────────────────┘
 
 text
-TERRABIA/
-├── docker-compose.yml
-├── eureka_register.json
-├── frontend
-├── k8s
-├── node_modules
-├── package.json
-├── package-lock.json
-├── README.md
-├── start-all.sh
-├── terra-auth-service
-├── terra-cloud-conf
-├── terra-conf-service
-├── terra-notification-service
-├── terra-order-transaction-service
-├── terra-product-service
-├── terra-proxy-service
-├── terra-registry-service
-├── terra-users-service
-├── Untitled
-└── venv
-✨ Fonctionnalités par Service
-Service	Langage	Responsabilités
-frontend	JavaScript/React	Interface utilisateur responsive
-terra-auth-service	Python	Authentification, autorisation, JWT
-terra-users-service	Python	Gestion des profils utilisateurs
-terra-product-service	Python	Catalogue, catégories, stocks
-terra-order-transaction-service	Python	Panier, commandes, paiements
-terra-notification-service	Python	Emails, notifications en temps réel
-terra-registry-service	Java/Spring	Découverte de services (Eureka)
-terra-proxy-service	Java/Spring	Routage, agrégation d'API
-📦 Prérequis
-Docker et Docker Compose (pour le développement local)
 
-Python 3.9+ (pour les services Python)
+### Stack Technologique
+| Composant | Technologie | Port | Description |
+|-----------|-------------|------|-------------|
+| **Frontend** | React + Vite + Tailwind CSS | 5173 | Interface utilisateur responsive |
+| **API Gateway** | Spring Boot | 8080 | Routage et agrégation des APIs |
+| **Authentication** | Django + JWT | 8082 | Gestion des tokens et RBAC |
+| **User Service** | Django | 8001 | Gestion des profils utilisateurs |
+| **Product Service** | Django | 8002 | Catalogue et stocks produits |
+| **Order Service** | Django | 8003 | Commandes et transactions |
+| **Notification** | Node.js + RabbitMQ | 8004 | Notifications multi-canaux |
+| **Service Registry** | Spring Cloud Eureka | 8761 | Découverte des services |
+| **Config Service** | Spring Cloud Config | 8888 | Gestion centralisée de configuration |
+| **Message Broker** | RabbitMQ | 5672 | Communication asynchrone |
+| **Database** | PostgreSQL | 5432 | Base de données principale |
 
-Node.js 16+ et npm (pour le frontend)
+## ✨ Fonctionnalités Clés
 
-Java 11+ (pour les services Spring/Eureka)
+### 🛒 Gestion des Produits
+- 📸 **Publication avec médias** (images/vidéos)
+- 📊 **Mise à jour dynamique** des stocks
+- 🏷️ **Catégorisation avancée** des produits
+- 🔍 **Recherche et filtres** multicritères
 
-kubectl et Minikube (pour le déploiement Kubernetes)
+### 💳 Processus d'Achat
+- 🛍️ **Panier persistant** et sécurisé
+- 💰 **Paiement Mobile Money** (MTN/Orange)
+- 🚚 **Calcul automatique** des frais de livraison
+- 📍 **Attribution intelligente** des livreurs
+- 🔄 **Suivi en temps réel** des commandes
 
-🚀 Installation et Démarrage
-1. Cloner le dépôt
+### 👥 Gestion des Comptes
+- 👨‍🌾 **Profils personnalisés** (Agriculteur/Acheteur/Livreur/Admin)
+- ⭐ **Système de notation** et réputation
+- 🔐 **Authentification sécurisée** JWT + OAuth2
+- 📱 **Multi-device** support
+
+### 📊 Administration
+- 📈 **Dashboard administrateur** complet
+- 👁️ **Surveillance en temps réel** des activités
+- ⚙️ **Gestion des utilisateurs** et permissions
+- 📊 **Analytics et rapports** détaillés
+
+## 👥 Rôles Utilisateurs
+
+| Rôle | Permissions | Accès |
+|------|-------------|-------|
+| **Agriculteur/Vendeur** | Publier produits, gérer stocks, voir commandes | Catalogue, Dashboard vendeur |
+| **Acheteur/Client** | Rechercher, commander, payer, notifier | Marketplace, Panier, Historique |
+| **Livreur** | Voir missions, mettre à jour statuts, géolocalisation | Application mobile de livraison |
+| **Administrateur** | Tout gérer, modérer, générer rapports | Dashboard admin complet |
+
+## 🚀 Démarrage Rapide
+
+### Prérequis
+```bash
+# Outils obligatoires
+- Docker 20.10+ et Docker Compose
+- Python 3.9+ (pour les services Django)
+- Node.js 18+ (pour frontend et service notifications)
+- Java 11+ (pour services Spring)
+- Git
+
+# Outils optionnels (pour développement)
+- kubectl et Minikube (déploiement Kubernetes)
+- PostgreSQL 14+ (développement local)
+- RabbitMQ 3.11+
+Installation en 5 minutes
 bash
+# 1. Cloner le dépôt
 git clone https://github.com/TP-Master1-GL/TERRABIA.git
 cd TERRABIA
-2. Démarrage avec Docker Compose (Recommandé pour le développement)
-bash
-# Lancer tous les services
+
+# 2. Lancer avec Docker Compose (recommandé)
 docker-compose up -d
 
-# Ou utiliser le script fourni
-chmod +x start-all.sh
-./start-all.sh
-3. Démarrage manuel des services
+# 3. Vérifier que tous les services sont opérationnels
+docker-compose ps
+
+# 4. Accéder aux interfaces
+# Frontend: http://localhost:5173
+# API Gateway: http://localhost:8080
+# Eureka Dashboard: http://localhost:8761
+# RabbitMQ Management: http://localhost:15672 (guest/guest)
+Installation Manuelle
 bash
-# 1. Démarrer le service de registry (Eureka)
+# Démarrer le service registry (prérequis pour les autres)
 cd terra-registry-service
-# Suivre les instructions du service...
+mvn spring-boot:run
 
-# 2. Démarrer les microservices
-# Chaque service possède son propre README avec instructions
-
-# 3. Démarrer le frontend
-cd frontend
-npm install
-npm run dev
-🐳 Déploiement
-Déploiement avec Kubernetes
-Les configurations Kubernetes sont disponibles dans le dossier k8s/ :
-
-bash
-# Appliquer les configurations
-kubectl apply -f k8s/
-
-# Vérifier l'état des pods
-kubectl get pods --all-namespaces
-Variables d'Environnement
-Chaque service nécessite une configuration via variables d'environnement. Consultez les fichiers .env.example ou application.properties dans chaque répertoire de service.
-
-📂 Structure du Projet (Détail)
-text
-.
-├── docker-compose.yml
-├── eureka_register.json
-├── frontend
-│   ├── dist
-│   ├── Dockerfile
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── nginx.conf
-│   ├── node_modules
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── postcss.config.js
-│   ├── public
-│   ├── README.md
-│   ├── src
-│   ├── tailwind.config.js
-│   └── vite.config.js
-├── k8s
-│   ├── configs
-│   ├── databases
-│   ├── ingress
-│   ├── kustomization-dev.yaml
-│   ├── kustomization-prod.yaml
-│   ├── kustomization.yaml
-│   ├── namespaces
-│   ├── README.md
-│   ├── scripts
-│   └── services
-├── node_modules
-│   ├── acorn
-│   ├── @alloc
-│   ├── asynckit
-│   ├── autoprefixer
-│   ├── axios
-│   ├── baseline-browser-mapping
-│   ├── browserslist
-│   ├── buffer-from
-│   ├── call-bind-apply-helpers
-│   ├── caniuse-lite
-│   ├── chart.js
-│   ├── clsx
-│   ├── combined-stream
-│   ├── commander
-│   ├── cookie
-│   ├── cssesc
-│   ├── date-fns
-│   ├── debug
-│   ├── delayed-stream
-│   ├── detect-libc
-│   ├── dunder-proto
-│   ├── electron-to-chromium
-│   ├── engine.io-client
-│   ├── engine.io-parser
-│   ├── enhanced-resolve
-│   ├── @esbuild
-│   ├── esbuild
-│   ├── escalade
-│   ├── es-define-property
-│   ├── es-errors
-│   ├── es-object-atoms
-│   ├── es-set-tostringtag
-│   ├── @floating-ui
-│   ├── follow-redirects
-│   ├── form-data
-│   ├── fraction.js
-│   ├── function-bind
-│   ├── get-intrinsic
-│   ├── get-proto
-│   ├── gopd
-│   ├── graceful-fs
-│   ├── hasown
-│   ├── has-symbols
-│   ├── has-tostringtag
-│   ├── @headlessui
-│   ├── @heroicons
-│   ├── @hookform
-│   ├── jiti
-│   ├── @jridgewell
-│   ├── @kurkle
-│   ├── leaflet
-│   ├── lightningcss
-│   ├── lightningcss-linux-x64-gnu
-│   ├── lucide-react
-│   ├── magic-string
-│   ├── math-intrinsics
-│   ├── mime-db
-│   ├── mime-types
-│   ├── mini-svg-data-uri
-│   ├── ms
-│   ├── nanoid
-│   ├── node-releases
-│   ├── normalize-range
-│   ├── picocolors
-│   ├── postcss
-│   ├── postcss-selector-parser
-│   ├── postcss-value-parser
-│   ├── property-expr
-│   ├── proxy-from-env
-│   ├── react
-│   ├── @react-aria
-│   ├── react-chartjs-2
-│   ├── react-dom
-│   ├── react-hook-form
-│   ├── @react-leaflet
-│   ├── react-leaflet
-│   ├── react-router
-│   ├── react-router-dom
-│   ├── @react-stately
-│   ├── @react-types
-│   ├── scheduler
-│   ├── set-cookie-parser
-│   ├── @socket.io
-│   ├── socket.io-client
-│   ├── socket.io-parser
-│   ├── source-map
-│   ├── source-map-js
-│   ├── source-map-support
-│   ├── @standard-schema
-│   ├── @swc
-│   ├── tabbable
-│   ├── @tailwindcss
-│   ├── tailwindcss
-│   ├── @tanstack
-│   ├── tapable
-│   ├── terser
-│   ├── tiny-case
-│   ├── toposort
-│   ├── tslib
-│   ├── type-fest
-│   ├── update-browserslist-db
-│   ├── use-sync-external-store
-│   ├── util-deprecate
-│   ├── ws
-│   ├── xmlhttprequest-ssl
-│   └── yup
-├── package.json
-├── package-lock.json
-├── README.md
-├── start-all.sh
-├── terra-auth-service
-│   ├── auth_app
-│   ├── auth_service
-│   ├── Dockerfile
-│   ├── manage.py
-│   ├── pytest.ini
-│   ├── requirements.txt
-│   └── venv
-├── terra-cloud-conf
-│   ├── application.properties
-│   ├── README.md
-│   ├── terra-auth-service.properties
-│   ├── terra-notification-service.properties
-│   ├── terra-order-transaction-service-dev.json
-│   ├── terra-order-transcation-service.properties
-│   ├── terra-product-service.properties
-│   ├── terra-proxy-service.properties
-│   ├── terra-registry-service.properties
-│   └── terra-users-service.properties
-├── terra-conf-service
-│   ├── Dockerfile
-│   ├── HELP.md
-│   ├── mvnw
-│   ├── mvnw.cmd
-│   ├── pom.xml
-│   ├── src
-│   └── target
-├── terra-notification-service
-│   ├── Dockerfile
-│   ├── node
-│   ├── node_modules
-│   ├── notification_service@1.0.0
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── README.md
-│   ├── scripts
-│   └── src
-├── terra-order-transaction-service
-│   ├── cleanup_drf_yasg.py
-│   ├── config
-│   ├── Dockerfile
-│   ├── entrypoint.sh
-│   ├── gunicorn.conf.py
-│   ├── htmlcov
-│   ├── logs
-│   ├── manage.py
-│   ├── order_app
-│   ├── pytest.ini
-│   ├── rabbitmq
-│   ├── requirements.txt
-│   ├── run_tests.sh
-│   ├── schema.yml
-│   ├── terra_orders
-│   ├── test_config_service.py
-│   ├── test_rabbitmq.py
-│   └── venv
-├── terra-product-service
-│   ├── Dockerfile
-│   ├── manage.py
-│   ├── product_app
-│   ├── pytest.ini
-│   ├── requirements.txt
-│   ├── terra_product_service
-│   └── venv
-├── terra-proxy-service
-│   ├── Dockerfile
-│   ├── HELP.md
-│   ├── mvnw
-│   ├── mvnw.cmd
-│   ├── pom.xml
-│   ├── src
-│   └── target
-├── terra-registry-service
-│   ├── Dockerfile
-│   ├── HELP.md
-│   ├── mvnw
-│   ├── mvnw.cmd
-│   ├── pom.xml
-│   ├── src
-│   └── target
-├── terra-users-service
-│   └── user_service
-├── Untitled
-└── venv
-    ├── bin
-    ├── include
-    ├── lib
-    ├── lib64 -> lib
-    └── pyvenv.cfg
-
-
-
-🔧 Développement
-Pour contribuer à un service Python :
-bash
-cd terra-auth-service  # ou autre service
+# Dans un autre terminal, démarrer les services métier
+cd terra-auth-service
 python -m venv venv
-source venv/bin/activate  # Sur Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python app.py
-Pour développer le frontend :
-bash
+python manage.py runserver 8082
+
+# Répéter pour chaque service (users, products, orders)
+# Ports par défaut: users(8001), products(8002), orders(8003)
+
+# Démarrer le frontend
 cd frontend
 npm install
 npm run dev
-🤝 Contributions
-Les contributions sont les bienvenues ! Pour contribuer :
+🐳 Déploiement avec Docker
 
-Forkez le projet
+Script de démarrage automatique
+bash
+#!/bin/bash
+# start-all.sh - Script pour démarrer tous les services
+echo "🚀 Démarrage de TERRABIA..."
 
-Créez une branche pour votre fonctionnalité (git checkout -b feature/ma-fonctionnalite)
+# Démarrer les services de base
+docker-compose up -d postgres rabbitmq
+sleep 10
 
-Committez vos changements (git commit -m 'Ajout de ma fonctionnalité')
+# Démarrer Eureka (service registry)
+docker-compose up -d eureka
+sleep 15
 
-Push vers la branche (git push origin feature/ma-fonctionnalite)
+# Démarrer les services de configuration
+docker-compose up -d config-service
+sleep 10
 
-Ouvrez une Pull Request
+# Démarrer les microservices
+docker-compose up -d auth-service users-service products-service orders-service notification-service
+
+# Démarrer l'API Gateway
+docker-compose up -d gateway
+
+# Démarrer le frontend
+cd frontend
+npm run build
+docker build -t terrabia-frontend .
+docker run -d -p 5173:80 terrabia-frontend
+
+echo "✅ TERRABIA est opérationnel!"
+echo "🌐 Frontend: http://localhost:5173"
+echo "🔗 API Gateway: http://localhost:8080"
+echo "📊 Eureka Dashboard: http://localhost:8761"
+⚙️ Configuration des Services
+Variables d'Environnement
+bash
+# Fichier .env à la racine
+# Base de données
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=terrabia
+DB_USER=terrabia_user
+DB_PASSWORD=secure_password
+
+# RabbitMQ
+RABBITMQ_HOST=rabbitmq
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest
+
+# JWT Configuration
+JWT_SECRET_KEY=votre_clé_secrète_très_longue_et_complexe
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15
+JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# Service URLs
+EUREKA_SERVER_URL=http://eureka:8761/eureka
+CONFIG_SERVER_URL=http://config-service:8888
+
+# External APIs
+PAYMENT_GATEWAY_URL=https://api.mobile-money.cm
+SMS_PROVIDER_URL=https://api.sms-provider.cm
+Configuration Spring Cloud
+properties
+# terra-cloud-conf/application.properties
+# Configuration centrale partagée
+spring.application.name=terrabia-config
+server.port=8888
+spring.profiles.active=native
+
+# Configuration des services individuels
+# terra-auth-service.properties
+auth.jwt.secret=${JWT_SECRET_KEY}
+auth.jwt.expiration=900000
+
+# terra-product-service.properties
+product.media.storage=s3
+product.media.max-size=10485760
+🔧 Guide de Développement
+Structure du Projet
+text
+TERRABIA/
+├── frontend/                    # Application React
+│   ├── src/                    # Composants et pages
+│   ├── public/                 # Assets statiques
+│   └── package.json           # Dépendances frontend
+├── terra-auth-service/         # Service d'authentification
+│   ├── auth_app/              # Application Django
+│   ├── requirements.txt       # Dépendances Python
+│   └── Dockerfile            # Configuration Docker
+├── terra-users-service/        # Gestion utilisateurs
+├── terra-product-service/      # Catalogue produits
+├── terra-order-transaction-service/ # Commandes
+├── terra-notification-service/ # Notifications (Node.js)
+├── terra-proxy-service/        # API Gateway (Spring)
+├── terra-registry-service/     # Eureka Server (Spring)
+├── terra-cloud-conf/           # Configuration centrale
+├── terra-conf-service/         # Config Server (Spring)
+├── k8s/                       # Manifests Kubernetes
+├── docker-compose.yml         # Orchestration locale
+└── start-all.sh              # Script de démarrage
+Développement d'un Service Python
+bash
+# Création d'un environnement virtuel
+cd terra-auth-service
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
+
+# Installation des dépendances
+pip install -r requirements.txt
+
+# Migration de la base de données
+python manage.py makemigrations
+python manage.py migrate
+
+# Création d'un superutilisateur
+python manage.py createsuperuser
+
+# Lancement du serveur de développement
+python manage.py runserver 8082
+
+# Exécution des tests
+python manage.py test
+pytest
+Développement Frontend
+bash
+cd frontend
+
+# Installation des dépendances
+npm install
+
+# Développement avec hot reload
+npm run dev
+
+# Build pour production
+npm run build
+
+# Exécution des tests
+npm test
+npm run test:e2e
+Communication Inter-Services
+
+📊 API Documentation
+Points d'Accès Principaux
+Toutes les APIs sont accessibles via l'API Gateway: http://localhost:8080/api/
+
+Service	Endpoints	Description
+Auth	POST /auth/login
+POST /auth/register
+POST /auth/refresh
+POST /auth/logout	Gestion authentification JWT
+Users	GET /users/{id}
+PUT /users/{id}
+GET /users/{id}/profile	Gestion profils utilisateurs
+Products	GET /products
+POST /products
+GET /products/{id}
+PUT /products/{id}	Catalogue produits
+Orders	POST /orders
+GET /orders/{id}
+PUT /orders/{id}/status
+POST /orders/{id}/pay	Commandes et paiements
+Notifications	GET /notifications
+POST /notifications/subscribe	Système de notifications
+
+
+
+Documentation Swagger
+Chaque service expose sa documentation Swagger/OpenAPI:
+
+Auth Service: http://localhost:8083/swagger/
+
+Product Service: http://localhost:8084/swagger/
+
+Order Service: http://localhost:8086/swagger/
+
+
+
+Sécurité
+🔐 Authentification: JWT avec expiration courte (15 minutes)
+
+🛡️ RBAC: 4 rôles avec permissions granulaires
+
+
+🤝 Contribution
+Processus de Contribution
+Fork le projet sur GitHub
+
+Clone votre fork localement
+
+Créez une branche pour votre fonctionnalité
+
+Développez avec les standards du projet
+
+Testez vos changements
+
+Soumettez une Pull Request
+
+
 
 📄 Licence
 Ce projet est sous licence MIT. Voir le fichier LICENSE pour plus de détails.
 
-📞 Support
-Pour toute question ou problème :
+Droits
+✅ Utilisation commerciale autorisée
 
-Consultez les README individuels dans chaque service
+✅ Modification autorisée
 
-Ouvrez une issue sur GitHub
+✅ Distribution autorisée
 
-Contactez l'équipe de développement
+✅ Utilisation privée autorisée
 
-État du projet : 🟢 Actif - Dernière mise à jour : Décembre 2025
+❌ Responsabilité limitée
 
+❌ Garantie limitée
+
+📞 Support et Contact
+Équipe de Développement
+NGUEMBU YEPMO JOHN - Architecte Technique ,Chef de Projet et Développeur fullstack
+
+MAFFO NGALEU LAETITIA - Développeuse backend
+
+TSABENG DELPHAN - Développeur Backend
+
+MAAMOC KENGUIM RONEL - Développeur
+
+Ressources
+📖 Documentation Technique
+
+🐛 Signaler un Bug
+
+💡 Suggestions d'Amélioration
+
+📧 Contact: terrabia237@gmail.com 
+
+Statut du Projet
+Version: 1.0.0 (MVP)
+
+État: 🟢 Actif - En développement
+
+Dernière mise à jour: Décembre 2025
+
+Prochaine version: V1.1 - Système de recommandation
+
+🎯 Roadmap
+Phase 1 - MVP (Décembre 2025)
+✅ Architecture microservices
+
+✅ Authentification et gestion utilisateurs
+
+✅ Catalogue produits de base
+
+✅ Système de commandes
+
+✅ Paiements Mobile Money
+
+✅ Notifications par email
+
+Phase 2 - Q1 2026
+🔄 Application mobile livreurs
+
+🔄 Système de recommandation IA
+
+🔄 Analytics avancés
+
+🔄 Support multi-langues
+
+Phase 3 - Q2 2026
+📅 Contract farming digital
+
+📅 Marketplace B2B
+
+📅 API publique pour partenaires
+
+📅 Certification produits
+
+<div align="center">
+TERRABIA - Transformer l'agriculture camerounaise par le numérique 🌱
+
+https://img.shields.io/github/stars/TP-Master1-GL/TERRABIA?style=social
+https://img.shields.io/github/forks/TP-Master1-GL/TERRABIA?style=social
+https://img.shields.io/github/issues/TP-Master1-GL/TERRABIA
