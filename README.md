@@ -65,14 +65,14 @@ text
 | Composant | Technologie | Port | Description |
 |-----------|-------------|------|-------------|
 | **Frontend** | React + Vite + Tailwind CSS | 5173 | Interface utilisateur responsive |
-| **API Gateway** | Spring Boot | 8080 | Routage et agrégation des APIs |
-| **Authentication** | Django + JWT | 8082 | Gestion des tokens et RBAC |
-| **User Service** | Django | 8001 | Gestion des profils utilisateurs |
-| **Product Service** | Django | 8002 | Catalogue et stocks produits |
-| **Order Service** | Django | 8003 | Commandes et transactions |
-| **Notification** | Node.js + RabbitMQ | 8004 | Notifications multi-canaux |
-| **Service Registry** | Spring Cloud Eureka | 8761 | Découverte des services |
-| **Config Service** | Spring Cloud Config | 8888 | Gestion centralisée de configuration |
+| **terra-proxy-service** | Spring Boot | 8082 | Routage et agrégation des APIs |
+| **terra-auth-service** | Django + JWT | 8083 | Gestion des tokens et RBAC |
+| **terra-user-service** | Django | 8085 | Gestion des profils utilisateurs |
+| **terra-product-service** | Django | 8084 | Catalogue et stocks produits |
+| **terra-order-transaction-service** | Django | 8086 | Commandes et transactions |
+| **terra-notification-service** | Node.js + RabbitMQ | 4002| Notifications multi-canaux |
+| **terra-registry-service ** | Spring Cloud Eureka | 8761 | Découverte des services |
+| **terra-conf-service** | Spring Cloud Config | 8080 | Gestion centralisée de configuration |
 | **Message Broker** | RabbitMQ | 5672 | Communication asynchrone |
 | **Database** | PostgreSQL | 5432 | Base de données principale |
 
@@ -141,7 +141,7 @@ docker-compose ps
 
 # 4. Accéder aux interfaces
 # Frontend: http://localhost:5173
-# API Gateway: http://localhost:8080
+# API Gateway: http://localhost:8082
 # Eureka Dashboard: http://localhost:8761
 # RabbitMQ Management: http://localhost:15672 (guest/guest)
 Installation Manuelle
@@ -155,10 +155,10 @@ cd terra-auth-service
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python manage.py runserver 8082
+python manage.py runserver 8083
 
 # Répéter pour chaque service (users, products, orders)
-# Ports par défaut: users(8001), products(8002), orders(8003)
+# Ports par défaut: users(8085), products(8084), orders(8086)
 
 # Démarrer le frontend
 cd frontend
@@ -177,18 +177,18 @@ docker-compose up -d postgres rabbitmq
 sleep 10
 
 # Démarrer Eureka (service registry)
-docker-compose up -d eureka
+docker-compose up -d terra-registry-service
 sleep 15
 
 # Démarrer les services de configuration
-docker-compose up -d config-service
+docker-compose up -d terra-conf-service
 sleep 10
 
 # Démarrer les microservices
-docker-compose up -d auth-service users-service products-service orders-service notification-service
+docker-compose up -d terra-auth-service terra-users-service terra-products-service terra-orders-transaction-service terra-notification-service
 
 # Démarrer l'API Gateway
-docker-compose up -d gateway
+docker-compose up -d terra-proxy-service
 
 # Démarrer le frontend
 cd frontend
@@ -392,7 +392,7 @@ MAFFO NGALEU LAETITIA - Développeuse backend
 
 TSABENG DELPHAN - Développeur Backend
 
-MAAMOC KENGUIM RONEL - Développeur
+MAAMOC KENGUIM RONEL - Développeur Backend
 
 Ressources
 📖 Documentation Technique
